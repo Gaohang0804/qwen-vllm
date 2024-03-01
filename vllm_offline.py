@@ -1,6 +1,6 @@
 from vllm_wrapper import vLLMWrapper
 
-model = "qwen/Qwen-7B-Chat-Int4"
+model = "Qwen/Qwen1.5-0.5B-Chat"
 
 vllm_model = vLLMWrapper(model,
                          quantization='gptq',

@@ -1,3 +1,10 @@
+"""
+使用vllm实现离线推理过程
+vllm和我们使用huggingface的chat的区别：使用vllm需要我们构建完整的prompt和添加特殊token（开始、结束）
+"""
+
+
+
 import copy
 import os
 from vllm import LLM
@@ -15,7 +22,7 @@ class vLLMWrapper:
     def __init__(self,
                  model_dir,
                  tensor_parallel_size=1,
-                 gpu_memory_utilization=0.90,
+             gpu_memory_utilization=0.60,  # 预占用，即使运行模型用不了这么多
                  dtype='float16',
                  quantization=None):
         # 模型目录下的generation_config.json文件，是推理的关键参数
@@ -54,6 +61,14 @@ class vLLMWrapper:
                          dtype=dtype)
 
     def chat(self, query, history=None, system="You are a helpful assistant.", extra_stop_words_ids=[]):
+        """
+
+        :param query: 提问
+        :param history: 历史提问
+        :param system: 系统提示
+        :param extra_stop_words_ids: 额外的用户自定义文本推理停止词
+        :return:
+        """
         # 历史聊天
         if history is None:
             history = []

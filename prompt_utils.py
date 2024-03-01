@@ -19,6 +19,7 @@ def _build_prompt(
 
     # 用于编码system/user/assistant的一段发言, 格式{role}\n{content}
     def _tokenize_str(role, content):  # 返回元组，下标0是文本，下标1是token ids
+        # 返回文本及对应的token_ids
         return f"{role}\n{content}", tokenizer.encode(role) + nl_tokens + tokenizer.encode(content)
 
     # 剩余token数
@@ -33,7 +34,8 @@ def _build_prompt(
 
     # prompt尾部: user发言和assistant引导
     query_text_part, query_tokens_part = _tokenize_str('user', query)
-    query_tokens_prefix = nl_tokens + im_start_tokens
+    query_tokens_prefix = nl_tokens + im_start_tokens  # \n<|im_start|>
+    # <|im_end|>\n<|im_start|>token(assistant)\n
     query_tokens_suffix = im_end_tokens + nl_tokens + im_start_tokens + tokenizer.encode('assistant') + nl_tokens
     if len(query_tokens_prefix) + len(query_tokens_part) + len(query_tokens_suffix) > left_token_space:  # query太长截断
         query_token_len = left_token_space - len(query_tokens_prefix) - len(query_tokens_suffix)
@@ -45,10 +47,10 @@ def _build_prompt(
 
     # prompt腰部: 历史user+assitant对话
     history_text, history_tokens = '', []
-    for hist_query, hist_response in reversed(history):  # 优先采用最近的对话历史
+    for hist_query, hist_response in reversed(history):  # reversed优先采用最近的对话历史
         hist_query_text, hist_query_tokens_part = _tokenize_str("user", hist_query)  # user\n历史提问
         hist_response_text, hist_response_tokens_part = _tokenize_str("assistant", hist_response)  # assistant\n历史回答
-        # 生成本轮对话
+        # 生成本轮对话  \n<|im_start|>提问<|im_end|>\n<|im_start|>回答<|im_end|>
         cur_history_tokens = nl_tokens + im_start_tokens + hist_query_tokens_part + im_end_tokens + nl_tokens + im_start_tokens + hist_response_tokens_part + im_end_tokens
         cur_history_text = f"\n{im_start}{hist_query_text}{im_end}\n{im_start}{hist_response_text}{im_end}"
         # 储存多轮对话
